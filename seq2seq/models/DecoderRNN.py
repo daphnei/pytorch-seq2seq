@@ -111,6 +111,8 @@ class DecoderRNN(BaseRNN):
         if self.use_attention:
             ret_dict[DecoderRNN.KEY_ATTN_SCORE] = list()
 
+        if type(inputs) is tuple:
+          inputs = inputs[0]
         inputs, batch_size, max_length = self._validate_args(inputs, encoder_hidden, encoder_outputs,
                                                              function, teacher_forcing_ratio)
         decoder_hidden = self._init_state(encoder_hidden)

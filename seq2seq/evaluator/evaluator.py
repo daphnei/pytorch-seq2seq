@@ -38,7 +38,7 @@ class Evaluator(object):
         device = None if torch.cuda.is_available() else -1
         batch_iterator = torchtext.data.BucketIterator(
             dataset=data, batch_size=self.batch_size,
-            sort=True, sort_key=lambda x: len(x.src),
+            sort=True, sort_key=None,
             device=device, train=False)
         tgt_vocab = data.fields[seq2seq.tgt_field_name].vocab
         pad = tgt_vocab.stoi[data.fields[seq2seq.tgt_field_name].pad_token]
@@ -46,6 +46,9 @@ class Evaluator(object):
         for batch in batch_iterator:
             input_variables, input_lengths  = getattr(batch, seq2seq.src_field_name)
             target_variables = getattr(batch, seq2seq.tgt_field_name)
+
+            if type(target_variables) is tuple:
+              target_variables = target_variables[0]
 
             decoder_outputs, decoder_hidden, other = model(input_variables, input_lengths.tolist(), target_variables)
 

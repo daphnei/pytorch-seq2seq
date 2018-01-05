@@ -76,7 +76,7 @@ class SupervisedTrainer(object):
         batch_iterator = torchtext.data.BucketIterator(
             dataset=data, batch_size=self.batch_size,
             sort=False, sort_within_batch=True,
-            sort_key=lambda x: len(x.src),
+            sort_key=None,
             device=device, repeat=False)
 
         steps_per_epoch = len(batch_iterator)
@@ -99,6 +99,8 @@ class SupervisedTrainer(object):
 
                 input_variables, input_lengths = getattr(batch, seq2seq.src_field_name)
                 target_variables = getattr(batch, seq2seq.tgt_field_name)
+                if type(target_variables) == tuple:
+                  target_variables = target_variables[0]
 
                 loss = self._train_batch(input_variables, input_lengths.tolist(), target_variables, model, teacher_forcing_ratio)
 
