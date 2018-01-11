@@ -141,8 +141,9 @@ class DecoderRNN(BaseRNN):
         # If teacher_forcing_ratio is True or False instead of a probability, the unrolling can be done in graph
         if use_teacher_forcing:
             decoder_input = inputs[:, :-1]
-            decoder_output, decoder_hidden, attn = self.forward_step(decoder_input, decoder_hidden, encoder_outputs,
-                                                                     function=function)
+            decoder_output, decoder_hidden, attn = self.forward_step(
+                decoder_input, decoder_hidden, encoder_outputs,
+                function=function)
 
             for di in range(decoder_output.size(1)):
                 step_output = decoder_output[:, di, :]

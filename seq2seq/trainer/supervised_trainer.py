@@ -48,11 +48,39 @@ class SupervisedTrainer(object):
 
         self.logger = logging.getLogger(__name__)
 
-    def _train_batch(self, input_variable, input_lengths, target_variable, model, teacher_forcing_ratio):
+    def _train_batch(self, batch, seq2seq, model, teacher_forcing_ratio):
         loss = self.loss
-        # Forward propagation
-        decoder_outputs, decoder_hidden, other = model(input_variable, input_lengths, target_variable,
-                                                       teacher_forcing_ratio=teacher_forcing_ratio)
+        num_sequences = len(seq2seq.field_names)
+        max_len = model.encoder.max_len
+
+        '''
+        input_variable, input_lengths = getattr(batch, seq2seq.field_names[0])
+        input_lengths = input_lengths.tolist()
+
+        target_variable, target_lengths = getattr(batch, seq2seq.field_names[num_sequences - 1])
+        decoder_outputs, decoder_hidden, other = model([input_variable], [input_lengths], target_variable, teacher_forcing_ratio=teacher_forcing_ratio)
+        
+        ''' 
+        input_variables_list = []
+        input_lengths_list = []
+        for idx in xrange(0, num_sequences - 1):
+          input_variable, input_lengths_tensor = getattr(
+              batch, seq2seq.field_names[idx])
+
+          input_variables_list.append(input_variable)
+          input_lengths_list.append(input_lengths_tensor.tolist())
+
+        target_variable, target_lengths = getattr(batch, seq2seq.field_names[num_sequences - 1])
+        model_out = model(
+            input_variables_list=input_variables_list,
+            input_lengths_list = input_lengths_list,
+            target_variable=target_variable,
+            teacher_forcing_ratio=teacher_forcing_ratio)
+        if model_out is None:
+          return None
+        decoder_outputs, decoder_hidden, other = model_out
+         
+        # '''
         # Get loss
         loss.reset()
         for step, step_output in enumerate(decoder_outputs):
@@ -73,6 +101,7 @@ class SupervisedTrainer(object):
         epoch_loss_total = 0  # Reset every epoch
 
         device = None if torch.cuda.is_available() else -1
+
         batch_iterator = torchtext.data.BucketIterator(
             dataset=data, batch_size=self.batch_size,
             sort=False, sort_within_batch=True,
@@ -84,6 +113,7 @@ class SupervisedTrainer(object):
 
         step = start_step
         step_elapsed = 0
+
         for epoch in range(start_epoch, n_epochs + 1):
             log.debug("Epoch: %d, Step: %d" % (epoch, step))
 
@@ -97,12 +127,13 @@ class SupervisedTrainer(object):
                 step += 1
                 step_elapsed += 1
 
-                input_variables, input_lengths = getattr(batch, seq2seq.src_field_name)
-                target_variables = getattr(batch, seq2seq.tgt_field_name)
-                if type(target_variables) == tuple:
-                  target_variables = target_variables[0]
+                # loss = self._train_batch(input_variables, input_lengths.tolist(), target_variables, model, teacher_forcing_ratio)
+                loss = self._train_batch(
+                    batch, seq2seq, model, teacher_forcing_ratio)
 
-                loss = self._train_batch(input_variables, input_lengths.tolist(), target_variables, model, teacher_forcing_ratio)
+                # Loss could be None if we were not able to process the batch.
+                if loss is None:
+                  continue
 
                 # Record average loss
                 print_loss_total += loss
@@ -122,8 +153,8 @@ class SupervisedTrainer(object):
                     Checkpoint(model=model,
                                optimizer=self.optimizer,
                                epoch=epoch, step=step,
-                               input_vocab=data.fields[seq2seq.src_field_name].vocab,
-                               output_vocab=data.fields[seq2seq.tgt_field_name].vocab).save(self.expt_dir)
+                               input_vocab=seq2seq.vocab,
+                               output_vocab=seq2seq.vocab).save(self.expt_dir)
 
             if step_elapsed == 0: continue
 
@@ -139,6 +170,11 @@ class SupervisedTrainer(object):
                 self.optimizer.update(epoch_loss_avg, epoch)
 
             log.info(log_msg)
+
+            log.info('FINAL EVAL RESULTS')
+            dev_loss, accuracy = self.evaluator.evaluate(model, dev_data)
+            self.optimizer.update(dev_loss, epoch)
+            log_msg += ", Dev %s: %.4f, Accuracy: %.4f" % (self.loss.name, dev_loss, accuracy)
 
     def train(self, model, data, num_epochs=5,
               resume=False, dev_data=None,

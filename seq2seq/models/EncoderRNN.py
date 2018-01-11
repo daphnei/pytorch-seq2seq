@@ -43,6 +43,9 @@ class EncoderRNN(BaseRNN):
         self.embedding = nn.Embedding(vocab_size, hidden_size)
         self.rnn = self.rnn_cell(hidden_size, hidden_size, n_layers,
                                  batch_first=True, bidirectional=bidirectional, dropout=dropout_p)
+        self.hidden_size = hidden_size * (2 if bidirectional else 1)
+        self.max_len = max_len
+        self.n_layers = n_layers
 
     def forward(self, input_var, input_lengths=None):
         """
@@ -62,6 +65,7 @@ class EncoderRNN(BaseRNN):
         if self.variable_lengths:
             embedded = nn.utils.rnn.pack_padded_sequence(embedded, input_lengths, batch_first=True)
         output, hidden = self.rnn(embedded)
+
         if self.variable_lengths:
             output, _ = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
         return output, hidden
