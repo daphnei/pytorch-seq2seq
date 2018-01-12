@@ -1,25 +1,5 @@
-# pytorch-seq2seq
-
-[![Build Status](https://travis-ci.org/IBM/pytorch-seq2seq.svg?branch=master)](https://travis-ci.org/IBM/pytorch-seq2seq)
-[![Join the chat at https://gitter.im/pytorch-seq2seq/Lobby](https://badges.gitter.im/pytorch-seq2seq/Lobby.svg)](https://gitter.im/pytorch-seq2seq/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-**[Documentation](https://ibm.github.io/pytorch-seq2seq/public/index.html)**
-
-This is a framework for sequence-to-sequence (seq2seq) models implemented in [PyTorch](http://pytorch.org).  The framework has modularized and extensible components for seq2seq models, training and inference, checkpoints, etc.  This is an alpha release. We appreciate any kind of feedback or contribution.
-
-# What's New in 0.1.4
-
-* Improved running speed significantly
-* Bidirectional encoder
-* Show token-wise accuracy in evaluation
-
-# Roadmap
-Seq2seq is a fast evolving field with new techniques and architectures being published frequently.  The goal of this library is facilitating the development of such techniques and applications.  While constantly improving the quality of code and documentation, we will focus on the following items:
-
-* Evaluation with benchmarks such as WMT machine translation, COCO image captioning, conversational models, etc;
-* Provide more flexible model options, improving the usability of the library;
-* Adding latest architectures such as the CNN based model proposed by [Convolutional Sequence to Sequence Learning](https://arxiv.org/abs/1705.03122) and the transformer model proposed by [Attention Is All You Need](https://arxiv.org/abs/1706.03762);
-* Support features in the new versions of PyTorch.
+# Story Generation with Seq2seq
+Based on IBM's Pytorch seq2seq code: https://github.com/IBM/pytorch-seq2seq
 
 # Installation
 This package requires Python 2.7 or 3.6. We recommend creating a new virtual environment for this project (using virtualenv or conda).  
