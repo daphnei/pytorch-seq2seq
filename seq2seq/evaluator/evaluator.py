@@ -54,6 +54,8 @@ class Evaluator(object):
 
         input_variables_list.append(input_variable)
         input_lengths_list.append(input_lengths_tensor.tolist())
+        # input_variables_list.append(input_variable[0, :].unsqueeze(0))
+        # input_lengths_list.append([input_lengths_tensor.tolist()[0]])
 
       target_variables, target_lengths = getattr(batch, seq2seq.field_names[num_sequences - 1])
       model_out = model(
@@ -64,7 +66,6 @@ class Evaluator(object):
         continue
       decoder_outputs, decoder_hidden, other = model_out
 
-      import pdb; pdb.set_trace()
       # Evaluation
       seqlist = other['sequence']
       for step, step_output in enumerate(decoder_outputs):

@@ -9,7 +9,7 @@ import torchtext
 from torch import optim
 
 import seq2seq
-from seq2seq.evaluator import Evaluator
+from seq2seq.evaluator import Evaluator, Predictor
 from seq2seq.loss import NLLLoss
 from seq2seq.optim import Optimizer
 from seq2seq.util.checkpoint import Checkpoint
@@ -35,6 +35,7 @@ class SupervisedTrainer(object):
             torch.manual_seed(random_seed)
         self.loss = loss
         self.evaluator = Evaluator(loss=self.loss, batch_size=batch_size)
+
         self.optimizer = None
         self.checkpoint_every = checkpoint_every
         self.print_every = print_every
@@ -171,10 +172,9 @@ class SupervisedTrainer(object):
 
             log.info(log_msg)
 
-            log.info('FINAL EVAL RESULTS')
-            dev_loss, accuracy = self.evaluator.evaluate(model, dev_data)
-            self.optimizer.update(dev_loss, epoch)
-            log_msg += ", Dev %s: %.4f, Accuracy: %.4f" % (self.loss.name, dev_loss, accuracy)
+        log.info('DONE TRAINING')
+        dev_loss, accuracy = self.evaluator.evaluate(model, dev_data)
+        log.info("Dev %s: %.4f, Accuracy: %.4f" % (self.loss.name, dev_loss, accuracy))
 
     def train(self, model, data, num_epochs=5,
               resume=False, dev_data=None,
