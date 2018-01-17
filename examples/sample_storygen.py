@@ -13,7 +13,7 @@ from seq2seq.trainer import SupervisedTrainer
 from seq2seq.models import EncoderRNN, DecoderRNN, Seq2seq
 from seq2seq.loss import Perplexity
 from seq2seq.optim import Optimizer
-from seq2seq.dataset import SourceField, TargetField
+from seq2seq.dataset import SequenceField
 from seq2seq.evaluator import Predictor
 from seq2seq.util.checkpoint import Checkpoint
 
@@ -90,7 +90,7 @@ def prepare_dataset(num_sequences):
   # Create fields for each sentence in sentence sequence
   fields = []
   for i in xrange(num_sequences):
-    fields.append(('field_' + str(i), TargetField(include_lengths=True)))
+    fields.append(('field_' + str(i), SequenceField(include_lengths=True)))
 
   # Filters out any examples with too-long sentences
   def len_filter(example):
@@ -124,6 +124,8 @@ if __name__ == '__main__':
   logging.basicConfig(format=LOG_FORMAT, level=getattr(logging, opt.log_level.upper()))
   logging.info(opt)
 
+  logging.info('===USING GPU %s===' % (str(torch.cuda.current_device())))
+
   if opt.load_checkpoint is not None:
     logging.info("loading checkpoint from {}".format(os.path.join(opt.expt_dir, Checkpoint.CHECKPOINT_DIR_NAME, opt.load_checkpoint)))
     checkpoint_path = os.path.join(opt.expt_dir, Checkpoint.CHECKPOINT_DIR_NAME, opt.load_checkpoint)
@@ -150,7 +152,7 @@ if __name__ == '__main__':
     if torch.cuda.is_available():
       loss.cuda()
 
-    batch_size = 32
+    batch_size = 2 #32
 
     seq2seq = None
     optimizer = None
@@ -190,7 +192,7 @@ if __name__ == '__main__':
             teacher_forcing_ratio=0.5,
             resume=opt.resume)
 
-  predictor = Predictor(seq2seq, input_vocab, output_vocab)
+  predictor = Predictor(seq2seq, input_vocab)
 
   while True:
     seq_str = raw_input("Type in a source sequence:")
