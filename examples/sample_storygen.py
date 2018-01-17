@@ -52,6 +52,14 @@ parser.add_argument('--log-level', dest='log_level',
 
 opt = parser.parse_args()
 
+# TODO(daphne): Turn these all into parser options
+num_epochs = 3
+batch_size = 32
+hidden_size = 512
+n_layers = 2
+num_sequences = 3
+decoder_dropout = 0.2
+
 class StoryDataset(torchtext.data.Dataset):
   def __init__(self, fields, path, extension='.txt', **kwargs):
     examples = []
@@ -134,8 +142,6 @@ if __name__ == '__main__':
     input_vocab = checkpoint.input_vocab
     output_vocab = checkpoint.output_vocab
   else:
-    num_sequences = 3
-
     train, dev = prepare_dataset(num_sequences)
     first_field = train.fields['field_0']
 
@@ -152,19 +158,15 @@ if __name__ == '__main__':
     if torch.cuda.is_available():
       loss.cuda()
 
-    batch_size = 2 #32
-
     seq2seq = None
     optimizer = None
     if not opt.resume:
       # Initialize model
-      hidden_size = 512
-      n_layers = 2
       bidirectional = True
       encoder = EncoderRNN(len(input_vocab), opt.max_len, hidden_size,
                  n_layers=n_layers, bidirectional=bidirectional, variable_lengths=True)
       decoder = DecoderRNN(len(output_vocab), opt.max_len, hidden_size * 2 if bidirectional else hidden_size,
-                 dropout_p=0.2, use_attention=True, bidirectional=bidirectional,
+                 dropout_p=decoder_dropout, use_attention=True, bidirectional=bidirectional,
                  n_layers=n_layers, eos_id=first_field.eos_id, sos_id=first_field.sos_id)
 
       seq2seq = Seq2seq(encoder, decoder, batch_size, num_sequences)
@@ -187,7 +189,7 @@ if __name__ == '__main__':
               print_every=10, expt_dir=opt.expt_dir)
 
     seq2seq = t.train(seq2seq, train,
-            num_epochs=6, dev_data=dev,
+            num_epochs=num_epochs, dev_data=dev,
             optimizer=optimizer,
             teacher_forcing_ratio=0.5,
             resume=opt.resume)
